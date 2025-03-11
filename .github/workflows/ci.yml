@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check version numbers match
+        run: |
+          manifest_version=$(jq -r '.version' manifest.json)
+          package_version=$(jq -r '.version' package.json)
+          if [ "$manifest_version" != "$package_version" ]; then
+            echo "Version mismatch: manifest.json ($manifest_version) != package.json ($package_version)"
+            exit 1
+          fi
+          echo "Version numbers match: $manifest_version"
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: |
+            main.js
+            manifest.json
