@@ -1,87 +1,148 @@
-import { App, Plugin, TFile, moment } from 'obsidian';
+import { App, Plugin, TFile, TAbstractFile, WorkspaceLeaf, View } from 'obsidian';
+import type moment from 'moment';
+
+declare global {
+    interface Window {
+        moment: typeof moment;
+    }
+}
+
+interface DailyNotesSettings {
+    folder?: string;
+    format?: string;
+}
+
+interface DailyNotesPlugin {
+    enabled: boolean;
+    instance?: {
+        options: DailyNotesSettings;
+    };
+}
+
+interface ObsidianApp extends App {
+    internalPlugins: {
+        plugins: {
+            'daily-notes': DailyNotesPlugin;
+        };
+    };
+    commands: {
+        commands: Record<string, { callback: () => Promise<void> }>;
+    };
+}
+
+interface ObsidianWorkspaceLeaf extends WorkspaceLeaf {
+    pinned?: boolean;
+}
+
+interface ObsidianView extends View {
+    file?: TFile;
+}
 
 export default class PinDailyNotePlugin extends Plugin {
-    pinnedLeafId: string | null = null;
+    private obsidianApp: ObsidianApp;
 
-    async onload() {
-        // Pin today's note on startup
-        this.app.workspace.onLayoutReady(() => this.pinTodayNote());
+    constructor(app: App, manifest: any) {
+        super(app, manifest);
+        this.obsidianApp = app as ObsidianApp;
+    }
 
-        // Register event for when daily notes plugin creates a new note
-        this.registerEvent(
-            this.app.workspace.on('file-open', (file) => {
-                if (file && this.isDailyNote(file)) {
-                    this.pinDailyNote(file);
+    async onload(): Promise<void> {
+        const handleDailyNote = async (): Promise<void> => {
+            const todayPath = this.getTodayNotePath();
+            if (!todayPath) return;
+
+            const leaves = this.obsidianApp.workspace.getLeavesOfType('markdown');
+            let leaf = leaves.find(leaf => {
+                const obsLeaf = leaf as ObsidianWorkspaceLeaf;
+                const view = obsLeaf.view as ObsidianView;
+                return obsLeaf.pinned && this.isDailyNotePath(view?.file?.path);
+            });
+
+            if (!leaf) {
+                leaf = this.obsidianApp.workspace.getLeaf('tab');
+                (leaf as ObsidianWorkspaceLeaf).setPinned(true);
+            }
+
+            this.obsidianApp.workspace.setActiveLeaf(leaf, { focus: true });
+
+            let todayFile = this.obsidianApp.vault.getAbstractFileByPath(todayPath);
+            if (!(todayFile instanceof TFile)) {
+                const dailyNotesCommand = this.obsidianApp.commands.commands['daily-notes'];
+                if (dailyNotesCommand) {
+                    await dailyNotesCommand.callback();
+                    const newLeaf = this.obsidianApp.workspace.getMostRecentLeaf();
+                    if (newLeaf && newLeaf !== leaf) {
+                        newLeaf.detach();
+                    }    
+                    todayFile = this.obsidianApp.vault.getAbstractFileByPath(todayPath);
                 }
-            })
-        );
+            }
 
-        // Add ribbon icon to manually pin today's note
-        this.addRibbonIcon('pin', 'Pin Today\'s Note', () => {
-            this.pinTodayNote();
+            if (todayFile instanceof TFile) {
+                await leaf.openFile(todayFile);
+                this.obsidianApp.workspace.setActiveLeaf(leaf, { focus: true });
+            }
+        };
+
+        this.addRibbonIcon('calendar-plus', 'Open today\'s daily note (Pinned)', () => {
+            handleDailyNote();
+        });
+
+        this.addCommand({
+            id: 'open-todays-daily-note-pinned',
+            name: 'Open today\'s daily note',
+            callback: () => handleDailyNote(),
         });
     }
 
-    getDailyNoteSettings() {
-        // @ts-ignore
-        const dailyNotesPlugin = this.app.internalPlugins.plugins['daily-notes'];
-        // Explicitly check boolean status
-        const isEnabled = dailyNotesPlugin?.enabled === true;
-        if (!isEnabled) {
-            return null;
-        }
-        return dailyNotesPlugin.instance.options;
-    }
-
-    isDailyNote(file: TFile): boolean {
-        const dailyNotePath = this.getTodayNotePath();
-        return dailyNotePath ? file.path === dailyNotePath : false;
-    }
-
     getTodayNotePath(): string | null {
-        const settings = this.getDailyNoteSettings();
-        if (!settings) {
-            console.log('Daily Notes plugin is not enabled');
+        const dailyNotesPlugin = this.obsidianApp.internalPlugins.plugins['daily-notes'];
+        if (!dailyNotesPlugin?.enabled) return null;
+
+        try {
+            const settings = dailyNotesPlugin.instance?.options;
+            if (!settings) return null;
+
+            const folder = settings.folder?.trim().replace(/\/$/, '') || '';
+            const format = settings.format?.trim() || 'YYYY-MM-DD';
+            const date = window.moment();
+            
+            let filename = date.format(format);
+            if (format.includes('/')) {
+                const formattedPath = folder
+                    ? `${folder}/${filename}`
+                    : filename;
+                return formattedPath + '.md';
+            } else {
+                const path = folder
+                    ? `${folder}/${filename}`
+                    : filename;
+                return path + '.md';
+            }
+        } catch (error) {
+            console.error('Error generating daily note path:', error);
             return null;
         }
-
-        const folder = settings.folder?.trim() || '';
-        const format = settings.format?.trim() || 'YYYY-MM-DD';
-        const filename = moment().format(format);
-        
-        return folder 
-            ? `${folder}/${filename}.md`
-            : `${filename}.md`;
     }
 
-    async pinTodayNote() {
-        const dailyNotePath = this.getTodayNotePath();
-        if (!dailyNotePath) {
-            return;
-        }
-
-        const file = this.app.vault.getAbstractFileByPath(dailyNotePath);
-        if (file instanceof TFile) {
-            await this.pinDailyNote(file);
-        }
-    }
-
-    async pinDailyNote(file: TFile) {
-        let targetLeaf = this.pinnedLeafId 
-            ? this.app.workspace.getLeafById(this.pinnedLeafId)
-            : this.app.workspace.getLeaf(true);
-
-        if (!targetLeaf) {
-            targetLeaf = this.app.workspace.getLeaf(true);
-        }
-
-        // Set the leaf to be pinned
-        await targetLeaf.setPinned(true);
+    isDailyNotePath(path: string | undefined): boolean {
+        if (!path) return false;
         
-        // Store the leaf id
-        this.pinnedLeafId = targetLeaf.id;
+        const dailyNotesPlugin = this.obsidianApp.internalPlugins.plugins['daily-notes'];
+        if (!dailyNotesPlugin?.enabled) return false;
 
-        // Open the file in the pinned leaf
-        await targetLeaf.openFile(file);
+        try {
+            const settings = dailyNotesPlugin.instance?.options;
+            if (!settings) return false;
+
+            const folder = settings.folder?.trim().replace(/\/$/, '') || '';
+            
+            if (folder && !path.startsWith(folder)) return false;
+
+            const filename = path.slice(folder ? folder.length + 1 : 0, -3);
+            return window.moment(filename, settings.format?.trim() || 'YYYY-MM-DD', true).isValid();
+        } catch (error) {
+            return false;
+        }
     }
 }
