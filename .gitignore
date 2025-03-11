@@ -4,6 +4,7 @@ node_modules/
 # Build output
 *.js.map
 data.json
+main.js
 
 # IDE
 .idea/

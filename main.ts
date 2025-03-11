@@ -1,4 +1,4 @@
-import { App, Plugin, TFile, TAbstractFile, WorkspaceLeaf, View } from 'obsidian';
+import { App, Plugin, TFile, WorkspaceLeaf, View } from 'obsidian';
 import type moment from 'moment';
 
 declare global {

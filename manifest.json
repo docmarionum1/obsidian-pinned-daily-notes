@@ -1,7 +1,7 @@
 {
-  "id": "obsidian-pinned-daily-notes",
+  "id": "pinned-daily-notes",
   "name": "Pinned Daily Notes",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "1.8.9",
   "description": "Dynamically update a pinned tab with today's daily note",
   "author": "Jeremy Neiman",
