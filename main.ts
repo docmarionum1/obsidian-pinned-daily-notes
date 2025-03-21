@@ -1,11 +1,4 @@
 import { App, Plugin, TFile, WorkspaceLeaf, View } from 'obsidian';
-import type moment from 'moment';
-
-declare global {
-    interface Window {
-        moment: typeof moment;
-    }
-}
 
 interface DailyNotesSettings {
     folder?: string;
@@ -60,7 +53,7 @@ export default class PinDailyNotePlugin extends Plugin {
 
             if (!leaf) {
                 leaf = this.obsidianApp.workspace.getLeaf('tab');
-                (leaf as ObsidianWorkspaceLeaf).setPinned(true);
+                leaf.setPinned(true);
             }
 
             this.obsidianApp.workspace.setActiveLeaf(leaf, { focus: true });
