@@ -1,6 +1,6 @@
 {
   "name": "obsidian-pinned-daily-notes",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Automatically pins today's daily note to a tab and updates it when opening new daily notes",
   "main": "main.js",
   "scripts": {

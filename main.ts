@@ -41,36 +41,49 @@ export default class PinDailyNotePlugin extends Plugin {
 
     async onload(): Promise<void> {
         const handleDailyNote = async (): Promise<void> => {
+            // Get the path of today's daily note
             const todayPath = this.getTodayNotePath();
             if (!todayPath) return;
 
-            const leaves = this.obsidianApp.workspace.getLeavesOfType('markdown');
+            // Find the pinned daily note leaf
+            // It could be today's or any matching daily note that's already pinned
+            const leaves: ObsidianWorkspaceLeaf[] = this.obsidianApp.workspace.getLeavesOfType('markdown');
             let leaf = leaves.find(leaf => {
-                const obsLeaf = leaf as ObsidianWorkspaceLeaf;
-                const view = obsLeaf.view as ObsidianView;
-                return obsLeaf.pinned && this.isDailyNotePath(view?.file?.path);
+                const view = leaf.view as ObsidianView;
+                return leaf.pinned && this.isDailyNotePath(view?.file?.path);
             });
 
-            if (!leaf) {
-                leaf = this.obsidianApp.workspace.getLeaf('tab');
-                leaf.setPinned(true);
-            }
-
-            this.obsidianApp.workspace.setActiveLeaf(leaf, { focus: true });
-
-            let todayFile = this.obsidianApp.vault.getAbstractFileByPath(todayPath);
-            if (!(todayFile instanceof TFile)) {
+            // If today's daily note doesn't already exist, create it
+            if (!(this.obsidianApp.vault.getAbstractFileByPath(todayPath) instanceof TFile)) {
                 const dailyNotesCommand = this.obsidianApp.commands.commands['daily-notes'];
                 if (dailyNotesCommand) {
+                    // Open a new tab leaf
+                    const newLeaf = this.obsidianApp.workspace.getLeaf(true);
+
+                    // Call the default daily notes command which will create the file in the new leaf
                     await dailyNotesCommand.callback();
-                    const newLeaf = this.obsidianApp.workspace.getMostRecentLeaf();
-                    if (newLeaf && newLeaf !== leaf) {
+
+                    // If we found a pinned daily note earlier, we can close newLeaf
+                    // Otherwise we will use the new leaf as the new pinned daily note leaf
+                    if (leaf) {
                         newLeaf.detach();
-                    }    
-                    todayFile = this.obsidianApp.vault.getAbstractFileByPath(todayPath);
+                    } else {
+                        newLeaf.setPinned(true);
+                        return;
+                    }
                 }
             }
 
+            // Get today's file after possibly creating it above
+            const todayFile = this.obsidianApp.vault.getAbstractFileByPath(todayPath);
+
+            // If we don't have an active leaf, create one
+            if (!leaf) {
+                leaf = this.obsidianApp.workspace.getLeaf(true);
+                leaf.setPinned(true);
+            }
+
+            // Open today's file in the pinned leaf
             if (todayFile instanceof TFile) {
                 await leaf.openFile(todayFile);
                 this.obsidianApp.workspace.setActiveLeaf(leaf, { focus: true });
