@@ -1,4 +1,6 @@
 import { App, Plugin, TFile, WorkspaceLeaf, View } from 'obsidian';
+import { PinDailyNotePluginSetting as Setting, PinDailyNotePluginSettingTab as SettingTab, DEFAULT_SETTING } from 'setting';
+
 
 interface DailyNotesSettings {
     folder?: string;
@@ -31,8 +33,10 @@ interface ObsidianView extends View {
     file?: TFile;
 }
 
+
 export default class PinDailyNotePlugin extends Plugin {
     private obsidianApp: ObsidianApp;
+    settings: Setting; // non private for access from Setting class
 
     constructor(app: App, manifest: any) {
         super(app, manifest);
@@ -99,6 +103,17 @@ export default class PinDailyNotePlugin extends Plugin {
             name: 'Open today\'s daily note',
             callback: () => handleDailyNote(),
         });
+
+        await this.loadSettings()
+        this.addSettingTab(new SettingTab(this.app, this))
+    }
+
+    async loadSettings() {
+        this.settings = Object.assign({}, DEFAULT_SETTING, await this.loadData())
+    }
+
+    async saveSettings() {
+        this.saveData(this.settings)
     }
 
     getTodayNotePath(): string | null {
@@ -112,7 +127,7 @@ export default class PinDailyNotePlugin extends Plugin {
             const folder = settings.folder?.trim().replace(/\/$/, '') || '';
             const format = settings.format?.trim() || 'YYYY-MM-DD';
             const date = window.moment();
-            
+
             let filename = date.format(format);
             if (format.includes('/')) {
                 const formattedPath = folder
@@ -133,7 +148,7 @@ export default class PinDailyNotePlugin extends Plugin {
 
     isDailyNotePath(path: string | undefined): boolean {
         if (!path) return false;
-        
+
         const dailyNotesPlugin = this.obsidianApp.internalPlugins.plugins['daily-notes'];
         if (!dailyNotesPlugin?.enabled) return false;
 
@@ -142,7 +157,7 @@ export default class PinDailyNotePlugin extends Plugin {
             if (!settings) return false;
 
             const folder = settings.folder?.trim().replace(/\/$/, '') || '';
-            
+
             if (folder && !path.startsWith(folder)) return false;
 
             const filename = path.slice(folder ? folder.length + 1 : 0, -3);
