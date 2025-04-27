@@ -8,7 +8,7 @@ export interface PinDailyNotePluginSetting {
 export enum PinOptions {
     EDITOR = 'editor',
     LEFT_SIDE_BAR = 'leftSideBar',
-    rightSideBar = 'rightSideBar',
+    RIGHT_SIDE_BAR = 'rightSideBar',
 }
 
 export const DEFAULT_SETTING: Partial<PinDailyNotePluginSetting> = {
@@ -44,5 +44,5 @@ export class PinDailyNotePluginSettingTab extends PluginSettingTab {
 const whereToPinDropdownOptions: Record<string, PinOptions> = {
     editor: PinOptions.EDITOR,
     leftSideBar: PinOptions.LEFT_SIDE_BAR,
-    rightSideBar: PinOptions.rightSideBar
+    rightSideBar: PinOptions.RIGHT_SIDE_BAR
 }
