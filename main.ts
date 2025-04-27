@@ -1,5 +1,5 @@
 import { App, Plugin, TFile, WorkspaceLeaf, View } from 'obsidian';
-import { PinDailyNotePluginSetting as Setting, PinDailyNotePluginSettingTab as SettingTab, DEFAULT_SETTING } from 'setting';
+import { PinDailyNotePluginSetting as Setting, PinDailyNotePluginSettingTab as SettingTab, DEFAULT_SETTING, PinOptions } from 'setting';
 
 
 interface DailyNotesSettings {
@@ -44,6 +44,25 @@ export default class PinDailyNotePlugin extends Plugin {
     }
 
     async onload(): Promise<void> {
+        const getLeafForDailyNote = (): WorkspaceLeaf => {
+            const { whereToPin } = this.settings;
+
+            /**
+             * if we get right/left leaf with true param
+             * the side leaf is split horizontally
+             * 
+             * Further todo? configure split or not
+             */
+            switch (whereToPin) {
+                case PinOptions.RIGHT_SIDE_BAR:
+                    return this.obsidianApp.workspace.getRightLeaf(false)
+                case PinOptions.LEFT_SIDE_BAR:
+                    return this.obsidianApp.workspace.getLeftLeaf(false)
+                default:
+                    return this.obsidianApp.workspace.getLeaf(true)
+            }
+        }
+
         const handleDailyNote = async (): Promise<void> => {
             // Get the path of today's daily note
             const todayPath = this.getTodayNotePath();
@@ -60,9 +79,10 @@ export default class PinDailyNotePlugin extends Plugin {
             // If today's daily note doesn't already exist, create it
             if (!(this.obsidianApp.vault.getAbstractFileByPath(todayPath) instanceof TFile)) {
                 const dailyNotesCommand = this.obsidianApp.commands.commands['daily-notes'];
+
                 if (dailyNotesCommand) {
                     // Open a new tab leaf
-                    const newLeaf = this.obsidianApp.workspace.getLeaf(true);
+                    const newLeaf = getLeafForDailyNote();
 
                     // Call the default daily notes command which will create the file in the new leaf
                     await dailyNotesCommand.callback();
@@ -83,7 +103,8 @@ export default class PinDailyNotePlugin extends Plugin {
 
             // If we don't have an active leaf, create one
             if (!leaf) {
-                leaf = this.obsidianApp.workspace.getLeaf(true);
+                leaf = getLeafForDailyNote()
+
                 leaf.setPinned(true);
             }
 
