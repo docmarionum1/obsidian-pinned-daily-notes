@@ -1,7 +1,7 @@
 {
   "id": "pinned-daily-notes",
   "name": "Pinned Daily Notes",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "minAppVersion": "1.8.9",
   "description": "Dynamically update a pinned tab with today's daily note",
   "author": "Jeremy Neiman",
