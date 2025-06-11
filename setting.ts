@@ -38,7 +38,10 @@ export class PinDailyNotePluginSettingTab extends PluginSettingTab {
             .setDesc('Default place to pin new daily note')
             .addDropdown((dropdown) => {
                 dropdown.addOptions(whereToPinDropdownOptions)
-                dropdown.setValue(this.plugin.settings.whereToPin)
+                dropdown.setValue(
+                    this.plugin.settings.whereToPin ||
+                    DEFAULT_SETTING.whereToPin
+                )
                 dropdown.onChange(async (value) => {
                     this.plugin.settings.whereToPin = value as PinOptions;
                     await this.plugin.saveSettings()
