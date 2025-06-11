@@ -44,8 +44,10 @@ export default class PinDailyNotePlugin extends Plugin {
     }
 
     async onload(): Promise<void> {
-        const getLeafForDailyNote = (): WorkspaceLeaf => {
-            const { whereToPin } = this.settings;
+        const getLeafForDailyNote = (whereToPin?: PinOptions): WorkspaceLeaf => {
+            if (!whereToPin) {
+                whereToPin = this.settings.whereToPin;
+            }
 
             /**
              * if we get right/left leaf with true param
@@ -81,17 +83,20 @@ export default class PinDailyNotePlugin extends Plugin {
                 const dailyNotesCommand = this.obsidianApp.commands.commands['daily-notes'];
 
                 if (dailyNotesCommand) {
-                    // Open a new tab leaf
-                    const newLeaf = getLeafForDailyNote();
+                    // Open a new tab leaf in the editor
+                    // Daily notes plugin only supports editor leaf
+                    const newLeaf = getLeafForDailyNote(PinOptions.EDITOR);
 
                     // Call the default daily notes command which will create the file in the new leaf
                     await dailyNotesCommand.callback();
 
                     // If we found a pinned daily note earlier, we can close newLeaf
-                    // Otherwise we will use the new leaf as the new pinned daily note leaf
-                    if (leaf) {
+                    // Or if the user wants to pin the daily note in someplace other
+                    // than the editor, we can also close newLeaf
+                    if (leaf || this.settings.whereToPin !== PinOptions.EDITOR) {
                         newLeaf.detach();
-                    } else {
+                    } else { 
+                        // Otherwise we will use the new leaf as the new pinned daily note leaf
                         newLeaf.setPinned(true);
                         return;
                     }

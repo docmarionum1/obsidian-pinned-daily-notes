@@ -2,7 +2,7 @@ import PinDailyNotePlugin from "./main"
 import { App, DropdownComponent, PluginSettingTab, Setting } from "obsidian"
 
 export interface PinDailyNotePluginSetting {
-    whereToPin: string
+    whereToPin: PinOptions
 }
 
 export enum PinOptions {
@@ -34,7 +34,7 @@ export class PinDailyNotePluginSettingTab extends PluginSettingTab {
                 dropdown.addOptions(whereToPinDropdownOptions)
                 dropdown.setValue(this.plugin.settings.whereToPin)
                 dropdown.onChange(async (value) => {
-                    this.plugin.settings.whereToPin = value;
+                    this.plugin.settings.whereToPin = value as PinOptions;
                     await this.plugin.saveSettings()
                 })
             })
