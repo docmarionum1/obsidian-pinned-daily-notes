@@ -1,5 +1,5 @@
-import PinDailyNotePlugin from "./main"
-import { App, DropdownComponent, PluginSettingTab, Setting } from "obsidian"
+import PinDailyNotePlugin from "./main";
+import { App, PluginSettingTab, Setting } from "obsidian";
 
 export interface PinDailyNotePluginSetting {
     whereToPin: PinOptions
@@ -12,24 +12,30 @@ export enum PinOptions {
 }
 
 export const DEFAULT_SETTING: Partial<PinDailyNotePluginSetting> = {
-    whereToPin: PinOptions.EDITOR
+    whereToPin: PinOptions.EDITOR,
+}
+
+const whereToPinDropdownOptions: Record<PinOptions, string> = {
+    [PinOptions.EDITOR]: 'Editor',
+    [PinOptions.LEFT_SIDE_BAR]: 'Left Sidebar',
+    [PinOptions.RIGHT_SIDE_BAR]: 'Right Sidebar',
 }
 
 export class PinDailyNotePluginSettingTab extends PluginSettingTab {
     plugin: PinDailyNotePlugin
 
     constructor(app: App, plugin: PinDailyNotePlugin) {
-        super(app, plugin)
+        super(app, plugin);
         this.plugin = plugin;
     }
 
     display(): void {
         const { containerEl } = this;
-        containerEl.empty()
+        containerEl.empty();
 
         new Setting(containerEl)
-            .setName('Where to Pin')
-            .setDesc('Default place to pin Daily Note')
+            .setName('Pin Location')
+            .setDesc('Default place to pin new daily note')
             .addDropdown((dropdown) => {
                 dropdown.addOptions(whereToPinDropdownOptions)
                 dropdown.setValue(this.plugin.settings.whereToPin)
@@ -37,12 +43,6 @@ export class PinDailyNotePluginSettingTab extends PluginSettingTab {
                     this.plugin.settings.whereToPin = value as PinOptions;
                     await this.plugin.saveSettings()
                 })
-            })
+            });
     }
-}
-
-const whereToPinDropdownOptions: Record<string, PinOptions> = {
-    editor: PinOptions.EDITOR,
-    leftSideBar: PinOptions.LEFT_SIDE_BAR,
-    rightSideBar: PinOptions.RIGHT_SIDE_BAR
 }

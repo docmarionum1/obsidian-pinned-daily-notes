@@ -36,7 +36,7 @@ interface ObsidianView extends View {
 
 export default class PinDailyNotePlugin extends Plugin {
     private obsidianApp: ObsidianApp;
-    settings: Setting; // non private for access from Setting class
+    settings: Setting;
 
     constructor(app: App, manifest: any) {
         super(app, manifest);
@@ -49,12 +49,6 @@ export default class PinDailyNotePlugin extends Plugin {
                 whereToPin = this.settings.whereToPin;
             }
 
-            /**
-             * if we get right/left leaf with true param
-             * the side leaf is split horizontally
-             * 
-             * Further todo? configure split or not
-             */
             switch (whereToPin) {
                 case PinOptions.RIGHT_SIDE_BAR:
                     return this.obsidianApp.workspace.getRightLeaf(false)
