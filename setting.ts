@@ -1,24 +1,36 @@
 import PinDailyNotePlugin from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
-export interface PinDailyNotePluginSetting {
-    whereToPin: PinOptions
-}
-
 export enum PinOptions {
     EDITOR = 'editor',
     LEFT_SIDE_BAR = 'leftSideBar',
     RIGHT_SIDE_BAR = 'rightSideBar',
 }
 
+export enum PluginOptions {
+    DAILY_NOTES = 'daily-notes',
+    PERIODIC_NOTES = 'periodic-notes',
+}
+
+export interface PinDailyNotePluginSetting {
+    whereToPin: PinOptions
+    plugin: PluginOptions
+}
+
 export const DEFAULT_SETTING: Partial<PinDailyNotePluginSetting> = {
     whereToPin: PinOptions.EDITOR,
+    plugin: PluginOptions.DAILY_NOTES,
 }
 
 const whereToPinDropdownOptions: Record<PinOptions, string> = {
     [PinOptions.EDITOR]: 'Editor',
     [PinOptions.LEFT_SIDE_BAR]: 'Left Sidebar',
     [PinOptions.RIGHT_SIDE_BAR]: 'Right Sidebar',
+}
+
+const pluginDropdownOptions: Record<PluginOptions, string> = {
+    [PluginOptions.DAILY_NOTES]: 'Daily Notes (Core Plugin)',
+    [PluginOptions.PERIODIC_NOTES]: 'Periodic Notes (Community Plugin)',
 }
 
 export class PinDailyNotePluginSettingTab extends PluginSettingTab {
@@ -44,7 +56,22 @@ export class PinDailyNotePluginSettingTab extends PluginSettingTab {
                 )
                 dropdown.onChange(async (value) => {
                     this.plugin.settings.whereToPin = value as PinOptions;
-                    await this.plugin.saveSettings()
+                    await this.plugin.saveSettings();
+                })
+            });
+
+        new Setting(containerEl)
+            .setName('Plugin')
+            .setDesc('Plugin to use for creating daily notes')
+            .addDropdown((dropdown) => {
+                dropdown.addOptions(pluginDropdownOptions)
+                dropdown.setValue(
+                    this.plugin.settings.plugin ||
+                    DEFAULT_SETTING.plugin
+                )
+                dropdown.onChange(async (value) => {
+                    this.plugin.settings.plugin = value as PluginOptions;
+                    await this.plugin.saveSettings();
                 })
             });
     }

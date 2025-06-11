@@ -1,5 +1,5 @@
 import { App, Plugin, TFile, WorkspaceLeaf, View } from 'obsidian';
-import { PinDailyNotePluginSetting as Setting, PinDailyNotePluginSettingTab as SettingTab, DEFAULT_SETTING, PinOptions } from 'setting';
+import { PinDailyNotePluginSetting as Setting, PinDailyNotePluginSettingTab as SettingTab, DEFAULT_SETTING, PinOptions, PluginOptions } from 'setting';
 
 
 interface DailyNotesSettings {
@@ -74,7 +74,13 @@ export default class PinDailyNotePlugin extends Plugin {
 
             // If today's daily note doesn't already exist, create it
             if (!(this.obsidianApp.vault.getAbstractFileByPath(todayPath) instanceof TFile)) {
-                const dailyNotesCommand = this.obsidianApp.commands.commands['daily-notes'];
+                // Get the command to use for creating the daily note
+                let dailyNotesCommand: { callback: () => Promise<void> } | undefined;
+                if (this.settings.plugin === PluginOptions.DAILY_NOTES) {
+                    dailyNotesCommand = this.obsidianApp.commands.commands['daily-notes'];
+                } else {
+                    dailyNotesCommand = this.obsidianApp.commands.commands['periodic-notes:open-daily-note'];
+                }
 
                 if (dailyNotesCommand) {
                     // Open a new tab leaf in the editor
