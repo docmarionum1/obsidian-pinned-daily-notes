@@ -22,10 +22,23 @@ A plugin for Obsidian that helps you manage your daily notes with pinned tabs. I
 
 ## Configuration
 
-No configuration needed! The plugin uses your existing Daily Notes settings for:
-- Note folder location
-- Date format
-- Other Daily Notes preferences
+The plugin allows you to configure where new pinned daily notes should appear:
+
+- **Editor**: Opens the daily note in the main editor area
+- **Left Sidebar**: Opens the daily note in a new tab in the left sidebar
+- **Right Sidebar**: Opens the daily note in a new tab in the right sidebar
+
+To change the pin location:
+
+1. Open Obsidian Settings
+2. Go to Community Plugins
+3. Find "Pinned Daily Notes" in your list of installed plugins
+4. Click the gear icon to open plugin settings
+5. Select your preferred location from the dropdown menu
+
+The setting will take effect the next time you open a daily note using the plugin.
+If you already have a pinned daily note in a location other than this setting, it
+won't move it.
 
 ## Installation
 
@@ -38,6 +51,7 @@ No configuration needed! The plugin uses your existing Daily Notes settings for:
 ## Support
 
 If you encounter any issues or have suggestions, please file them on [GitHub](https://github.com/docmarionum1/obsidian-pinned-daily-notes/issues).
+
 
 ## License
 
