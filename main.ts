@@ -1,4 +1,4 @@
-import { App, Plugin, TFile, WorkspaceLeaf, View } from 'obsidian';
+import { App, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 import { PinDailyNotePluginSetting as Setting, PinDailyNotePluginSettingTab as SettingTab, DEFAULT_SETTING, PinOptions, PluginOptions } from 'setting';
 
 
@@ -28,11 +28,6 @@ interface ObsidianApp extends App {
 interface ObsidianWorkspaceLeaf extends WorkspaceLeaf {
     pinned?: boolean;
 }
-
-interface ObsidianView extends View {
-    file?: TFile;
-}
-
 
 export default class PinDailyNotePlugin extends Plugin {
     private obsidianApp: ObsidianApp;
@@ -68,8 +63,11 @@ export default class PinDailyNotePlugin extends Plugin {
             // It could be today's or any matching daily note that's already pinned
             const leaves: ObsidianWorkspaceLeaf[] = this.obsidianApp.workspace.getLeavesOfType('markdown');
             let leaf = leaves.find(leaf => {
-                const view = leaf.view as ObsidianView;
-                return leaf.pinned && this.isDailyNotePath(view?.file?.path);
+                // Since Obsidian 1.7.2, tabs not yet viewed in this session hold a
+                // DeferredView with no `file`, so read the path from the saved view
+                // state instead of from the view itself.
+                const path = leaf.getViewState()?.state?.file as string | undefined;
+                return leaf.pinned && this.isDailyNotePath(path);
             });
 
             // If today's daily note doesn't already exist, create it
